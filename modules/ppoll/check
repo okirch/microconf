@@ -1,0 +1,17 @@
+##################################################################
+# Check for ppoll()
+##################################################################
+
+uc_try_link ppoll <<__PROG
+#define _GNU_SOURCE
+#include <signal.h>
+#include <poll.h>
+#include <stdlib.h>
+
+int main(int argc, char **argv)
+{
+	ppoll(NULL, 0, NULL, NULL);
+}
+__PROG
+
+

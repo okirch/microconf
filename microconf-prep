@@ -1,0 +1,167 @@
+#!/bin/bash
+#
+# microconf is a simple tool for building simple configure scripts.
+#
+# Copyright (C) 2021 Olaf Kirch <okir@suse.de>
+#
+
+uc_supportfiles_dir=/usr/share/microconf
+
+uc_default_modules="builtin platform defaults"
+
+function uc_fatal {
+
+	echo "$@" >&2
+	exit 2
+}
+
+uc_configure=
+for __dir in "$@" "."; do
+	__script="$__dir/configure"
+	if [ -x "$__script" ]; then
+		uc_configure=$__script
+		uc_sourcedir=$__dir
+		break
+	fi
+done
+
+if [ -z "$uc_configure" ]; then
+	uc_fatal "Unable to find your configure script"
+fi
+
+if [ ! -r "$uc_sourcedir/RELEASE" ]; then
+	uc_fatal "You need to supply a RELEASE file in your top-level source directory"
+fi
+
+if ! grep -qs '^VERSION=' "$uc_sourcedir/RELEASE"; then
+	uc_fatal "Your RELEASE file does not seem to define a VERSION"
+fi
+
+##################################################################
+# Extract list of required modules from configure script
+# These are provided by the user in this fashion:
+#
+#  microconf:begin
+#  require python3
+#  require ruby
+#  microconf:end
+##################################################################
+__uc_requires=""
+__uc_block_start_found=false
+__uc_block_end_found=false
+while read line; do
+	expr "$line" : " *# *microconf:begin.*" >/dev/null || continue
+
+	__uc_block_start_found=true
+	while read line; do
+		if expr "$line" : " *# *microconf:end.*" >/dev/null; then
+			__uc_block_end_found=true
+			break
+		fi
+
+		case $line in
+		*"require"*)
+			__require=$(expr "$line" : " *# *require *\([^ ]*\).*")
+			__uc_requires="$__uc_requires $__require";;
+		*)
+			uc_fatal "Cannot handle line in microconf block: $line";;
+		esac
+	done
+done < $uc_configure
+
+if ! $__uc_block_start_found; then
+	uc_fatal "$uc_configure: no microconf:begin line found"
+fi
+if ! $__uc_block_end_found; then
+	uc_fatal "$uc_configure: no microconf:end line found"
+fi
+
+echo "$uc_configure requires these modules: $__uc_requires"
+
+##################################################################
+uc_stage1_counter=0
+uc_stage2_counter=0
+uc_stage3_counter=0
+
+function uc_stage_index {
+
+	stage=$1
+
+	__uc_index=$((uc_${stage}_counter++))
+	__uc_index=$(printf "%02u" $__uc_index)
+}
+
+function uc_maybe_install_module {
+
+	stage=$1
+	module=$2
+	script=$3
+
+	path="$uc_supportfiles_dir/modules/$module/$script"
+	if [ -f "$path" ]; then
+		uc_stage_index $stage
+
+		test -d "$uc_installdir/$stage" || mkdir -vp "$uc_installdir/$stage"
+		cp -v "$path" "$uc_installdir/$stage/$__uc_index-$module"
+	fi
+}
+
+function uc_module_requires {
+
+	module=$1
+
+	path="$uc_supportfiles_dir/modules/$module/requires"
+	if [ -f "$path" ]; then
+		cat $path
+	fi
+}
+
+function uc_maybe_install_part {
+
+	script=$1
+
+	path="$uc_supportfiles_dir/parts/$script"
+	if [ -f "$path" ]; then
+		test -d "$uc_installdir" || mkdir -vp "$uc_installdir"
+		cp -v "$path" "$uc_installdir/$script"
+	fi
+}
+
+function uc_process_module {
+
+	local module=$1
+
+	declare -gA __uc_module_seen
+
+	if [ -n "${__uc_module_seen[$module]}" ]; then
+		echo "$module already installed"
+		return
+	fi
+
+	let __uc_module_seen[$module]=1
+
+	for req in $(uc_module_requires $module); do
+		uc_process_module $req
+	done
+
+	uc_maybe_install_module stage1 $module options
+	uc_maybe_install_module stage2 $module functions
+	uc_maybe_install_module stage3 $module check
+	uc_maybe_install_module stage4 $module subst
+}
+
+uc_installdir="$uc_sourcedir/microconf"
+
+rm -rf "$uc_installdir"
+
+uc_maybe_install_part prepare
+uc_maybe_install_part check
+uc_maybe_install_part subst
+
+for module in $uc_default_modules; do
+	uc_process_module $module
+done
+
+for module in $__uc_requires; do
+	uc_process_module $module
+done

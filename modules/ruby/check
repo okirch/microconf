@@ -1,0 +1,36 @@
+##################################################################
+# Handle ruby
+##################################################################
+if [ "$uc_with_ruby" = "detect" ]; then
+	echo -n "Detecting ruby... "
+	uc_with_ruby=
+	uc_ruby_interp_path=$(type -p ruby)
+	if [ -z "$uc_ruby_interp_path" ]; then
+		uc_with_ruby=none
+	else
+		uc_with_ruby=$($uc_ruby_interp_path -e 'puts RUBY_VERSION')
+	fi
+
+	echo "$uc_with_ruby"
+elif [ "$uc_with_ruby" = "none" ]; then
+	echo "Caller disabled ruby"
+else
+	echo "Cannot handle --with-ruby=$uc_with_ruby" >&2
+	exit 2
+fi
+
+
+# Note, ruby installation ignores --prefix and installs to whatever directory
+# ruby says it will look for our gems.
+if [ "$uc_with_ruby" != "none" ]; then
+	echo -n "Detecting ruby gem directory... "
+	uc_ruby_gemdir=$($uc_ruby_interp_path -e 'puts Gem.default_dir')
+	echo "$uc_ruby_gemdir"
+
+	uc_check_prefix ruby_gemdir "$uc_ruby_gemdir"
+else
+	uc_ruby_gemdir=
+fi
+
+
+

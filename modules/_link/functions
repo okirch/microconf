@@ -1,0 +1,25 @@
+##################################################################
+# Helper function for linking a C program
+##################################################################
+function uc_try_link {
+
+	name=$1
+
+	echo -n "Checking for $name... "
+	cat >test.c
+
+	if gcc -o a.out test.c 2>compile.log; then
+		echo "yes"
+		verdict=define
+	else
+		echo "no"
+		verdict=undef
+		if $opt_verbose; then
+			cat compile.log
+		fi
+	fi
+
+	export uc_define_have_$name=$verdict
+	rm -f a.out test.c compile.log
+}
+
