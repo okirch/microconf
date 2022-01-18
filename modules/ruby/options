@@ -2,6 +2,8 @@ uc_add_option_with ruby
 uc_with_ruby=detect
 
 uc_add_help <<EOH
+
+
   Override ruby detection
         --with-ruby=VERSION (does not work right now)
         --without-ruby
