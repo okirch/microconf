@@ -1,0 +1,7 @@
+##################################################################
+# libselinux version
+##################################################################
+if [ -z "$uc_with_libselinux" -o "$uc_with_libselinux" = "detect" ]; then
+	uc_pkg_config_check_package libselinux
+fi
+

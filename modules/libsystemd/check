@@ -1,0 +1,6 @@
+##################################################################
+# libsystemd version
+##################################################################
+if [ -z "$uc_with_libsystemd" -o "$uc_with_libsystemd" = "detect" ]; then
+	uc_pkg_config_check_package libsystemd
+fi

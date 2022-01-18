@@ -1,0 +1,11 @@
+uc_add_option_with libsystemd
+uc_with_libsystemd=detect
+
+uc_add_help <<EOH
+
+
+  Override libsystemd detection
+        --with-libsystemd=VERSION
+        --without-libsystemd
+ 
+EOH

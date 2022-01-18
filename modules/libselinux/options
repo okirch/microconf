@@ -1,0 +1,12 @@
+uc_add_option_with libselinux
+uc_with_libselinux=detect
+
+uc_add_help <<EOH
+
+
+  Override libselinux detection
+        --with-libselinux=VERSION
+        --without-libselinux
+ 
+EOH
+
