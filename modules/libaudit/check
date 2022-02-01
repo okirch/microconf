@@ -1,0 +1,7 @@
+##################################################################
+# libaudit version
+##################################################################
+if [ -z "$uc_with_libaudit" -o "$uc_with_libaudit" = "detect" ]; then
+	uc_pkg_config_check_package audit
+fi
+

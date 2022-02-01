@@ -1,0 +1,12 @@
+uc_add_option_with libaudit
+uc_with_libaudit=detect
+
+uc_add_help <<EOH
+
+
+  Override libaudit detection
+        --with-libaudit=VERSION
+        --without-libaudit
+ 
+EOH
+
