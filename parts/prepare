@@ -32,6 +32,7 @@ function uc_run_stage {
 	stage=$1
 
 	for module in "$__uc_scriptdir/$stage/"*-*; do
+		test -f $module || continue
 		uc_debug "Loading $stage/$(basename $module)"
 		. $module
 	done
