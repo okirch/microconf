@@ -119,11 +119,15 @@ function uc_module_requires {
 function uc_maybe_install_part {
 
 	script=$1
+	mode=$2
 
 	path="$uc_supportfiles_dir/parts/$script"
 	if [ -f "$path" ]; then
 		test -d "$uc_installdir" || mkdir -vp "$uc_installdir"
 		cp -v "$path" "$uc_installdir/$script"
+		if [ -n "$mode" ]; then
+			chmod $mode "$uc_installdir/$script"
+		fi
 	fi
 }
 
@@ -156,7 +160,7 @@ rm -rf "$uc_installdir"
 
 uc_maybe_install_part prepare
 uc_maybe_install_part check
-uc_maybe_install_part subst
+uc_maybe_install_part subst +x
 
 for module in $uc_default_modules; do
 	uc_process_module $module
