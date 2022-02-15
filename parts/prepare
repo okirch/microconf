@@ -25,6 +25,17 @@ function uc_debug {
 }
 
 ##################################################################
+# Reset state before doing anything else
+##################################################################
+function uc_clean_slate {
+
+	rm -f "$__uc_scriptdir/sedscript"
+	if [ -d "$uc_sourcedir/.git" ]; then
+		echo "sedscript" > "$__uc_scriptdir/.gitignore"
+	fi
+}
+
+##################################################################
 # Run all scripts belonging to a certain stage
 ##################################################################
 function uc_run_stage {
@@ -137,6 +148,8 @@ function uc_show_help {
 #  - register all options
 #  - parse all options
 ##################################################################
+uc_clean_slate
+
 uc_run_stage stage1
 
 if ! getopt -Q -l "$__uc_long_options" -o "dv" -- "$@"; then
