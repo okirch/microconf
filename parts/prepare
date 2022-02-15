@@ -76,6 +76,7 @@ function uc_maybe_call_post_hook {
 function uc_define_version {
 
 	varname=$1
+	: ${varname:=version}
 
 	. $uc_sourcedir/RELEASE
 
