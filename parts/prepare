@@ -95,6 +95,24 @@ function uc_define_version {
 }
 
 ##################################################################
+# Define a date variable
+##################################################################
+function uc_define_date {
+
+	varname=$1
+	: ${varname:=date}
+
+	. $uc_sourcedir/RELEASE
+
+	if [ -z "$DATE" ]; then
+		DATE=$(date +"%B %Y")
+	fi
+
+	export uc_$varname="$DATE"
+	export uc_date="$DATE"
+}
+
+##################################################################
 # Handle help messages
 ##################################################################
 __uc_help_msg=""
