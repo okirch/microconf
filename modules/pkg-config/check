@@ -52,28 +52,30 @@ function uc_pkg_config_check_package {
 	fi
 
 	echo -n "Detecting $pkgname version... "
-	export uc_with_$pkgname=
+
+	var_id=$(echo "$pkgname" | tr '.-' '_')
+	export uc_with_$var_id=
 
 	if ! pkg-config $pkgname; then
 		echo "not found" >&2
-		export uc_with_$pkgname=none
-		export uc_${pkgname}_libdir=
-		export uc_${pkgname}_incdir=
-		export uc_${pkgname}_cflags=
-		export uc_${pkgname}_libs=
-		export uc_define_have_${pkgname}=undef
+		export uc_with_$var_id=none
+		export uc_${var_id}_libdir=
+		export uc_${var_id}_incdir=
+		export uc_${var_id}_cflags=
+		export uc_${var_id}_libs=
+		export uc_define_have_${var_id}=undef
 		return 1
 	fi
 
 	version="$(pkg-config --modversion $pkgname)"
 	echo "$version"
 
-	export uc_with_$pkgname="$version"
-	export uc_${pkgname}_libdir="$(pkg-config --variable libdir $pkgname)"
-	export uc_${pkgname}_incdir="$(pkg-config --variable includedir $pkgname)"
-	export uc_${pkgname}_cflags="$(pkg-config --cflags $pkgname)"
-	export uc_${pkgname}_libs="$(pkg-config --libs $pkgname)"
-	export uc_define_have_${pkgname}=define
+	export uc_with_$var_id="$version"
+	export uc_${var_id}_libdir="$(pkg-config --variable libdir $pkgname)"
+	export uc_${var_id}_incdir="$(pkg-config --variable includedir $pkgname)"
+	export uc_${var_id}_cflags="$(pkg-config --cflags $pkgname)"
+	export uc_${var_id}_libs="$(pkg-config --libs $pkgname)"
+	export uc_define_have_${var_id}=define
 
 	return 0
 }
