@@ -29,24 +29,18 @@ if [ -z "$uc_configure" ]; then
 	uc_fatal "Unable to find your configure script"
 fi
 
-if [ ! -r "$uc_sourcedir/RELEASE" ]; then
-	uc_fatal "You need to supply a RELEASE file in your top-level source directory"
-fi
-
-if ! grep -qs '^VERSION=' "$uc_sourcedir/RELEASE"; then
-	uc_fatal "Your RELEASE file does not seem to define a VERSION"
-fi
-
 ##################################################################
 # Extract list of required modules from configure script
 # These are provided by the user in this fashion:
 #
 #  microconf:begin
+#  version 1.2.3.4
 #  require python3
 #  require ruby
 #  microconf:end
 ##################################################################
 __uc_requires=""
+__uc_version=""
 __uc_block_start_found=false
 __uc_block_end_found=false
 while read line; do
@@ -63,11 +57,26 @@ while read line; do
 		*"require"*)
 			__require=$(expr "$line" : " *# *require *\([^ ]*\).*")
 			__uc_requires="$__uc_requires $__require";;
+		*"version"*)
+			__uc_version=$(expr "$line" : " *# *version *\([^ ]*\).*");;
 		*)
 			uc_fatal "Cannot handle line in microconf block: $line";;
 		esac
 	done
 done < $uc_configure
+
+if [ -z "$__uc_version" ]; then
+	if [ ! -r "$uc_sourcedir/RELEASE" ]; then
+		uc_fatal "You need to specify a version number; either in the configure script, or in a RELEASE file in $uc_sourcedir"
+	fi
+
+	. "$uc_sourcedir/RELEASE"
+	if [ -z "$VERSION" ]; then
+		uc_fatal "Your RELEASE file does not seem to define a VERSION"
+	fi
+
+	__uc_version="$VERSION"
+fi
 
 if ! $__uc_block_start_found; then
 	uc_fatal "$uc_configure: no microconf:begin line found"

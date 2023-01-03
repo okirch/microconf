@@ -10,6 +10,7 @@ A really simple configure script for microconf could look like this:
 #!/bin/bash
 #
 # microconf:begin
+# version 0.5
 # require shlib
 # require ppoll
 # require libsystemd
@@ -19,7 +20,8 @@ A really simple configure script for microconf could look like this:
 . microconf/prepare
 
 ##################################################################
-# Get version from RELEASE file
+# Define my_version as the current version (from the version
+# declaration above).
 ##################################################################
 uc_define_version my_version
 
@@ -38,9 +40,6 @@ uc_define_version my_version
 ##################################################################
 uc_subst Make.defs
 ```
-
-In addition, you need a file called `RELEASE` in your source directory,
-containing the version of your project as `VERSION = 1.2.3`.
 
 With this in place, you can invoke microconf:
 
