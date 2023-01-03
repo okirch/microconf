@@ -30,9 +30,6 @@ function uc_debug {
 function uc_clean_slate {
 
 	rm -f "$__uc_scriptdir/sedscript"
-	if [ -d "$uc_sourcedir/.git" ]; then
-		echo "sedscript" > "$__uc_scriptdir/.gitignore"
-	fi
 }
 
 ##################################################################

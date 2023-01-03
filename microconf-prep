@@ -178,3 +178,9 @@ done
 for module in $__uc_requires; do
 	uc_process_module $module
 done
+
+echo "uc_version=$__uc_version" > "$uc_installdir/version"
+
+if [ -d "$uc_sourcedir/.git" ]; then
+	echo "sedscript" >"$uc_installdir/.gitignore"
+fi
