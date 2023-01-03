@@ -1,0 +1,11 @@
+uc_add_option_with_nodefault @OPTION_NAME@
+
+uc_add_help <<EOH
+
+
+  User-defined option --with-@OPTION_NAME@
+        --with-@OPTION_NAME@=value
+        --without-@OPTION_NAME@
+
+EOH
+

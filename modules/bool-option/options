@@ -1,0 +1,11 @@
+uc_add_option_enable @OPTION_NAME@ @OPTION_VALUE@
+
+uc_add_help <<EOH
+
+
+  User-defined option @OPTION_NAME@ (default @OPTION_VALUE@)
+        --enable-@OPTION_NAME@
+        --disable-@OPTION_NAME@
+
+EOH
+

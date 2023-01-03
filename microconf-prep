@@ -41,6 +41,8 @@ fi
 ##################################################################
 __uc_requires=""
 __uc_version=""
+__uc_with_options=""
+__uc_bool_options=""
 __uc_block_start_found=false
 __uc_block_end_found=false
 while read line; do
@@ -53,15 +55,36 @@ while read line; do
 			break
 		fi
 
-		case $line in
-		*"require"*)
-			__require=$(expr "$line" : " *# *require *\([^ ]*\).*")
-			__uc_requires="$__uc_requires $__require";;
-		*"version"*)
-			__uc_version=$(expr "$line" : " *# *version *\([^ ]*\).*");;
+		set -- $line
+		if [ "$1" != "#" ]; then
+			continue
+		fi
+
+		word=$2; shift 2
+		case $word in
+		require)
+			__uc_requires="$__uc_requires $*";;
+		version)
+			if [ $# -ne 1 ]; then
+				uc_fatal "Bad number of arguments in $line"
+			fi
+			__uc_version="$1";;
+		with)
+			__uc_with_options="$__uc_with_options $1"
+			export uc_with_$1="$2"
+			;;
+		enable)
+			__uc_bool_options="$__uc_bool_options $1"
+			var_name=$(echo $1 | tr .- _)
+			export uc_enable_$var_name=true;;
+		disable)
+			__uc_bool_options="$__uc_bool_options $1"
+			var_name=$(echo $1 | tr .- _)
+			export uc_enable_$var_name=false;;
 		*)
 			uc_fatal "Cannot handle line in microconf block: $line";;
 		esac
+		continue
 	done
 done < $uc_configure
 
@@ -105,6 +128,7 @@ function uc_maybe_install_module {
 	stage=$1
 	module=$2
 	script=$3
+	shift 3
 
 	path="$uc_supportfiles_dir/modules/$module/$script"
 	if [ -f "$path" ]; then
@@ -112,6 +136,11 @@ function uc_maybe_install_module {
 
 		test -d "$uc_installdir/$stage" || mkdir -vp "$uc_installdir/$stage"
 		cp -v "$path" "$uc_installdir/$stage/$__uc_index-$module"
+
+		# Process template
+		if [ $# -ne 0 ]; then
+			"$@" "$uc_installdir/$stage/$__uc_index-$module"
+		fi
 	fi
 }
 
@@ -163,6 +192,58 @@ function uc_process_module {
 	uc_maybe_install_module stage4 $module subst
 }
 
+function uc_process_with_option {
+
+	with_name=$1
+
+	uc_maybe_install_module stage1 with-option options \
+		uc_process_with_template $with_name
+	uc_maybe_install_module stage2 with-option functions \
+		uc_process_with_template $with_name
+	uc_maybe_install_module stage3 with-option check \
+		uc_process_with_template $with_name
+	uc_maybe_install_module stage4 with-option subst \
+		uc_process_with_template $with_name
+}
+
+function uc_process_with_template {
+
+	with_name=$1
+	path=$2
+
+	var_name=$(echo $with_name | tr .- _)
+	eval with_value="\$uc_with_$var_name"
+	sed -i -e "s:@OPTION_NAME@:$with_name:" \
+	       -e "s:@OPTION_VALUE@:$with_value:" \
+		"$path"
+}
+
+function uc_process_boolean_option {
+
+	bool_name=$1
+
+	uc_maybe_install_module stage1 bool-option options \
+		uc_process_boolean_template $bool_name
+	uc_maybe_install_module stage2 bool-option functions \
+		uc_process_boolean_template $bool_name
+	uc_maybe_install_module stage3 bool-option check \
+		uc_process_boolean_template $bool_name
+	uc_maybe_install_module stage4 bool-option subst \
+		uc_process_boolean_template $bool_name
+}
+
+function uc_process_boolean_template {
+
+	bool_name=$1
+	path=$2
+
+	var_name=$(echo $bool_name | tr .- _)
+	eval bool_value="\$uc_enable_$var_name"
+	sed -i -e "s:@OPTION_NAME@:$bool_name:" \
+	       -e "s:@OPTION_VALUE@:$bool_value:" \
+		"$path"
+}
+
 uc_installdir="$uc_sourcedir/microconf"
 
 rm -rf "$uc_installdir"
@@ -173,6 +254,14 @@ uc_maybe_install_part subst +x
 
 for module in $uc_default_modules; do
 	uc_process_module $module
+done
+
+for option in $__uc_bool_options; do
+	uc_process_boolean_option $option
+done
+
+for option in $__uc_with_options; do
+	uc_process_with_option $option
 done
 
 for module in $__uc_requires; do
